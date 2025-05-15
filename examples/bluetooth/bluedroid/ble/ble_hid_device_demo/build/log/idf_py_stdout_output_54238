@@ -1,0 +1,88 @@
+Command: /Users/niranjanabalaji/.espressif/python_env/idf5.5_py3.13_env/bin/python /Users/niranjanabalaji/cse-classes/cse121/esp-idf/tools/idf_monitor.py -p /dev/cu.usbmodem1101 -b 115200 --toolchain-prefix riscv32-esp-elf- --target esp32c3 --revision 3 --decode-panic backtrace /Users/niranjanabalaji/cse-classes/cse121/esp-idf/examples/bluetooth/bluedroid/ble/ble_hid_device_demo/build/hidd_demos.elf /Users/niranjanabalaji/cse-classes/cse121/esp-idf/examples/bluetooth/bluedroid/ble/ble_hid_device_demo/build/bootloader/bootloader.elf -m '/Users/niranjanabalaji/.espressif/python_env/idf5.5_py3.13_env/bin/python' '/Users/niranjanabalaji/cse-classes/cse121/esp-idf/tools/idf.py'
+pi_flash: Detected size(4096k) ESP-ROM:esp32c3-api1-20210207
+Build:Feb  7 2021
+rst:0x15 (USB_UART_CHIP_RESET),boot:0xc (SPI_FAST_FLASH_BOOT)
+Saved PC:0x4004c0d6
+SPIWP:0xee
+mode:DIO, clock div:1
+load:0x3fcd5820,len:0x15c0
+load:0x403cbf10,len:0xc34
+load:0x403ce710,len:0x2ff0
+entry 0x403cbf1a
+[0;32mI (24) boot: ESP-IDF v5.5-dev-3372-g38628f98b9 2nd stage bootloader[0m
+[0;32mI (24) boot: compile time May  2 2025 12:01:42[0m
+[0;32mI (25) boot: chip revision: v0.4[0m
+[0;32mI (26) boot: efuse block revision: v1.2[0m
+[0;32mI (30) boot.esp32c3: SPI Speed      : 80MHz[0m
+[0;32mI (34) boot.esp32c3: SPI Mode       : DIO[0m
+[0;32mI (37) boot.esp32c3: SPI Flash Size : 2MB[0m
+[0;32mI (41) boot: Enabling RNG early entropy source...[0m
+[0;32mI (45) boot: Partition Table:[0m
+[0;32mI (48) boot: ## Label            Usage          Type ST Offset   Length[0m
+[0;32mI (54) boot:  0 nvs              WiFi data        01 02 00009000 00006000[0m
+[0;32mI (61) boot:  1 phy_init         RF data          01 01 0000f000 00001000[0m
+[0;32mI (67) boot:  2 factory          factory app      00 00 00010000 00100000[0m
+[0;32mI (74) boot: End of partition table[0m
+[0;32mI (77) esp_image: segment 0: paddr=00010020 vaddr=3c090020 size=1da10h (121360) map[0m
+[0;32mI (104) esp_image: segment 1: paddr=0002da38 vaddr=3fc93800 size=02404h (  9220) load[0m
+[0;32mI (106) esp_image: segment 2: paddr=0002fe44 vaddr=40380000 size=001d4h (   468) load[0m
+[0;32mI (108) esp_image: segment 3: paddr=00030020 vaddr=42000020 size=8d010h (577552) map[0m
+[0;32mI (207) esp_image: segment 4: paddr=000bd038 vaddr=403801d4 size=135d4h ( 79316) load[0m
+[0;32mI (222) esp_image: segment 5: paddr=000d0614 vaddr=50000000 size=0001ch (    28) load[0m
+[0;32mI (229) boot: Loaded app from partition at offset 0x10000[0m
+[0;32mI (229) boot: Disabling RNG early entropy source...[0m
+[0;32mI (240) cpu_start: Unicore app[0m
+[0;32mI (248) cpu_start: Pro cpu start user code[0m
+[0;32mI (248) cpu_start: cpu freq: 160000000 Hz[0m
+[0;32mI (248) app_init: Application information:[0m
+[0;32mI (249) app_init: Project name:     hidd_demos[0m
+[0;32mI (253) app_init: App version:      v5.5-dev-3372-g38628f98b9[0m
+[0;32mI (258) app_init: Compile time:     May  2 2025 12:01:19[0m
+[0;32mI (263) app_init: ELF file SHA256:  9d49f88cc...[0m
+[0;32mI (267) app_init: ESP-IDF:          v5.5-dev-3372-g38628f98b9[0m
+[0;32mI (273) efuse_init: Min chip rev:     v0.3[0m
+[0;32mI (277) efuse_init: Max chip rev:     v1.99 [0m
+[0;32mI (281) efuse_init: Chip rev:         v0.4[0m
+[0;32mI (285) heap_init: Initializing. RAM available for dynamic allocation:[0m
+[0;32mI (291) heap_init: At 3FC9A030 len 00025FD0 (151 KiB): RAM[0m
+[0;32mI (296) heap_init: At 3FCC0000 len 0001C710 (113 KiB): Retention RAM[0m
+[0;32mI (302) heap_init: At 3FCDC710 len 00002950 (10 KiB): Retention RAM[0m
+[0;32mI (308) heap_init: At 5000001C len 00001FCC (7 KiB): RTCRAM[0m
+[0;32mI (314) spi_flash: detected chip: generic[0m
+[0;32mI (317) spi_flash: flash io: dio[0m
+[0;33mW (320) spi_flash: Detected size(4096k) larger than the size in the binary image header(2048k). Using the size in the binary image header.[0m
+[0;32mI (332) sleep_gpio: Configure to isolate all GPIO pins in sleep state[0m
+[0;32mI (338) sleep_gpio: Enable automatic switching of GPIO sleep configuration[0m
+[0;32mI (345) coexist: coex firmware version: 777f317b1[0m
+[0;32mI (350) coexist: coexist rom version 9387209[0m
+[0;32mI (354) main_task: Started on CPU0[0m
+[0;32mI (354) main_task: Calling app_main()[0m
+[0;32mI (354) BLE_INIT: BT controller compile version [edf923e][0m
+[0;32mI (364) BLE_INIT: Bluetooth MAC: 34:85:18:02:16:5e[0m
+[0;32mI (364) phy_init: phy_version 1201,bae5dd99,Mar  3 2025,15:36:21[0m
+[0;32mI (444) HID_LE_PRF: esp_hidd_prf_cb_hdl(), start added the hid service to the stack database. incl_handle = 40[0m
+[0;32mI (444) HID_LE_PRF: hid svc handle = 2d[0m
+[0;32mI (444) main_task: Returned from app_main()[0m
+[0;32mI (594) HID_DEMO: remote BD_ADDR: 0ce441e763be[0m
+[0;32mI (594) HID_DEMO: address type = 0[0m
+[0;32mI (594) HID_DEMO: pair status = success[0m
+[0;32mI (624) HID_LE_PRF: HID connection establish, conn_id = 0[0m
+[0;32mI (624) HID_DEMO: ESP_HIDD_EVENT_BLE_CONNECT[0m
+[0;32mI (1314) HID_DEMO: ESP_HIDD_EVENT_BLE_LED_REPORT_WRITE_EVT[0m
+[0;32mI (1314) HID_DEMO: 00[0m
+[0;32mI (1444) HID_DEMO: Mouse moving right[0m
+[0;32mI (1464) HID_DEMO: ESP_HIDD_EVENT_BLE_LED_REPORT_WRITE_EVT[0m
+[0;32mI (1464) HID_DEMO: 00[0m
+[0;32mI (1824) HID_DEMO: ESP_HIDD_EVENT_BLE_LED_REPORT_WRITE_EVT[0m
+[0;32mI (1824) HID_DEMO: 00[0m
+[0;32mI (1854) HID_DEMO: ESP_HIDD_EVENT_BLE_LED_REPORT_WRITE_EVT[0m
+[0;32mI (1854) HID_DEMO: 00[0m
+[0;32mI (1884) HID_DEMO: ESP_HIDD_EVENT_BLE_LED_REPORT_WRITE_EVT[0m
+[0;32mI (1884) HID_DEMO: 00[0m
+[0;32mI (3444) HID_DEMO: Send the volume[0m
+[0;32mI (4544) HID_DEMO: Mouse moving left[0m
+[0;32mI (7644) HID_DEMO: Mouse moving right[0m
+[0;32mI (10744) HID_DEMO: Mouse moving left[0m
+[0;32mI (11444) HID_DEMO: Send the volume[0m
+[0;32mI (13844) HID_DEMO: Mouse moving right[0m
+[0;32mI (16944) HID_DEMO: Mouse moving left[0m

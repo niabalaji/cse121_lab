@@ -1,0 +1,2 @@
+source /Users/niranjanabalaji/cse-classes/cse121/esp-idf/examples/bluetooth/bluedroid/ble/ble_hid_device_demo/build/bootloader/gdbinit/symbols
+source /Users/niranjanabalaji/cse-classes/cse121/esp-idf/examples/bluetooth/bluedroid/ble/ble_hid_device_demo/build/bootloader/gdbinit/connect
