@@ -1,202 +1,144 @@
-/*
- * SPDX-FileCopyrightText: 2022-2023 Espressif Systems (Shanghai) CO LTD
- *
- * SPDX-License-Identifier: Apache-2.0
- */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "soc/soc_caps.h"
-#include "esp_log.h"
 #include "esp_adc/adc_oneshot.h"
 #include "esp_adc/adc_cali.h"
 #include "esp_adc/adc_cali_scheme.h"
+#include "esp_log.h"
+#include "esp_timer.h"
 
-const static char *TAG = "EXAMPLE";
+#define UNIT_MS 100
+#define DOT_MS (UNIT_MS)
+#define DASH_MS (3 * UNIT_MS)
+#define LETTER_SPACE_MS 280
+#define WORD_SPACE_MS 650
+#define MAX_MORSE_LEN 5
+#define THRESHOLD 700
 
-/*---------------------------------------------------------------
-        ADC General Macros
----------------------------------------------------------------*/
-//ADC1 Channels
-#if CONFIG_IDF_TARGET_ESP32
-#define EXAMPLE_ADC1_CHAN0          ADC_CHANNEL_4
-#define EXAMPLE_ADC1_CHAN1          ADC_CHANNEL_5
-#else
-#define EXAMPLE_ADC1_CHAN0          ADC_CHANNEL_2
-#define EXAMPLE_ADC1_CHAN1          ADC_CHANNEL_3
-#endif
+static const char *TAG = "MORSE_DECODER";
 
-#if (SOC_ADC_PERIPH_NUM >= 2) && !CONFIG_IDF_TARGET_ESP32C3
-/**
- * On ESP32C3, ADC2 is no longer supported, due to its HW limitation.
- * Search for errata on espressif website for more details.
- */
-#define EXAMPLE_USE_ADC2            1
-#endif
+char morse_letter[MAX_MORSE_LEN + 1] = {0};
+int letter_index = 0;
+char message_buffer[256] = {0};
+int message_index = 0;
+int prev_state = -1;
+int64_t last_change_time = 0;
 
-#if EXAMPLE_USE_ADC2
-//ADC2 Channels
-#if CONFIG_IDF_TARGET_ESP32
-#define EXAMPLE_ADC2_CHAN0          ADC_CHANNEL_0
-#else
-#define EXAMPLE_ADC2_CHAN0          ADC_CHANNEL_0
-#endif
-#endif  //#if EXAMPLE_USE_ADC2
+// Morse code table
+typedef struct {
+    const char *morse;
+    char letter;
+} morse_entry_t;
 
-#define EXAMPLE_ADC_ATTEN           ADC_ATTEN_DB_12
+static const morse_entry_t morse_table[] = {
+    {".-", 'A'},   {"-...", 'B'}, {"-.-.", 'C'}, {"-..", 'D'},
+    {".", 'E'},    {"..-.", 'F'}, {"--.", 'G'},  {"....", 'H'},
+    {"..", 'I'},   {".---", 'J'}, {"-.-", 'K'},  {".-..", 'L'},
+    {"--", 'M'},   {"-.", 'N'},   {"---", 'O'},  {".--.", 'P'},
+    {"--.-", 'Q'}, {".-.", 'R'},  {"...", 'S'},  {"-", 'T'},
+    {"..-", 'U'},  {"...-", 'V'}, {".--", 'W'},  {"-..-", 'X'},
+    {"-.--", 'Y'}, {"--..", 'Z'},
+    {"-----", '0'}, {".----", '1'}, {"..---", '2'}, {"...--", '3'},
+    {"....-", '4'}, {".....", '5'}, {"-....", '6'}, {"--...", '7'},
+    {"---..", '8'}, {"----.", '9'},
+    {NULL, 0}
+};
 
-static int adc_raw[2][10];
-static int voltage[2][10];
-static bool example_adc_calibration_init(adc_unit_t unit, adc_channel_t channel, adc_atten_t atten, adc_cali_handle_t *out_handle);
-static void example_adc_calibration_deinit(adc_cali_handle_t handle);
+char decode_morse(const char *morse) {
+    for (int i = 0; morse_table[i].morse != NULL; i++) {
+        if (strcmp(morse, morse_table[i].morse) == 0) {
+            return morse_table[i].letter;
+        }
+    }
+    ESP_LOGW(TAG, "Unknown Morse sequence: [%s]", morse);
+    return '?';
+}
 
-void app_main(void)
-{
-    //-------------ADC1 Init---------------//
+void app_main(void) {
     adc_oneshot_unit_handle_t adc1_handle;
-    adc_oneshot_unit_init_cfg_t init_config1 = {
+    adc_oneshot_unit_init_cfg_t init_config = {
         .unit_id = ADC_UNIT_1,
     };
-    ESP_ERROR_CHECK(adc_oneshot_new_unit(&init_config1, &adc1_handle));
+    ESP_ERROR_CHECK(adc_oneshot_new_unit(&init_config, &adc1_handle));
 
-    //-------------ADC1 Config---------------//
-    adc_oneshot_chan_cfg_t config = {
-        .atten = EXAMPLE_ADC_ATTEN,
+    adc_oneshot_chan_cfg_t chan_config = {
+        .atten = ADC_ATTEN_DB_12,
         .bitwidth = ADC_BITWIDTH_DEFAULT,
     };
-    ESP_ERROR_CHECK(adc_oneshot_config_channel(adc1_handle, EXAMPLE_ADC1_CHAN0, &config));
-    ESP_ERROR_CHECK(adc_oneshot_config_channel(adc1_handle, EXAMPLE_ADC1_CHAN1, &config));
+    ESP_ERROR_CHECK(adc_oneshot_config_channel(adc1_handle, ADC_CHANNEL_2, &chan_config));
 
-    //-------------ADC1 Calibration Init---------------//
-    adc_cali_handle_t adc1_cali_chan0_handle = NULL;
-    adc_cali_handle_t adc1_cali_chan1_handle = NULL;
-    bool do_calibration1_chan0 = example_adc_calibration_init(ADC_UNIT_1, EXAMPLE_ADC1_CHAN0, EXAMPLE_ADC_ATTEN, &adc1_cali_chan0_handle);
-    bool do_calibration1_chan1 = example_adc_calibration_init(ADC_UNIT_1, EXAMPLE_ADC1_CHAN1, EXAMPLE_ADC_ATTEN, &adc1_cali_chan1_handle);
-
-#if EXAMPLE_USE_ADC2
-    //-------------ADC2 Init---------------//
-    adc_oneshot_unit_handle_t adc2_handle;
-    adc_oneshot_unit_init_cfg_t init_config2 = {
-        .unit_id = ADC_UNIT_2,
-        .ulp_mode = ADC_ULP_MODE_DISABLE,
-    };
-    ESP_ERROR_CHECK(adc_oneshot_new_unit(&init_config2, &adc2_handle));
-
-    //-------------ADC2 Calibration Init---------------//
-    adc_cali_handle_t adc2_cali_handle = NULL;
-    bool do_calibration2 = example_adc_calibration_init(ADC_UNIT_2, EXAMPLE_ADC2_CHAN0, EXAMPLE_ADC_ATTEN, &adc2_cali_handle);
-
-    //-------------ADC2 Config---------------//
-    ESP_ERROR_CHECK(adc_oneshot_config_channel(adc2_handle, EXAMPLE_ADC2_CHAN0, &config));
-#endif  //#if EXAMPLE_USE_ADC2
+    last_change_time = esp_timer_get_time();
 
     while (1) {
-        ESP_ERROR_CHECK(adc_oneshot_read(adc1_handle, EXAMPLE_ADC1_CHAN0, &adc_raw[0][0]));
-        ESP_LOGI(TAG, "ADC%d Channel[%d] Raw Data: %d", ADC_UNIT_1 + 1, EXAMPLE_ADC1_CHAN0, adc_raw[0][0]);
-        if (do_calibration1_chan0) {
-            ESP_ERROR_CHECK(adc_cali_raw_to_voltage(adc1_cali_chan0_handle, adc_raw[0][0], &voltage[0][0]));
-            ESP_LOGI(TAG, "ADC%d Channel[%d] Cali Voltage: %d mV", ADC_UNIT_1 + 1, EXAMPLE_ADC1_CHAN0, voltage[0][0]);
+        int adc_val = 0;
+        ESP_ERROR_CHECK(adc_oneshot_read(adc1_handle, ADC_CHANNEL_2, &adc_val));
+        int light_on = adc_val > THRESHOLD ? 1 : 0;
+        int64_t now = esp_timer_get_time();
+        int64_t duration = (now - last_change_time) / 1000;
+
+        if (prev_state == -1) {
+            prev_state = light_on;
+            last_change_time = now;
         }
-        vTaskDelay(pdMS_TO_TICKS(1000));
 
-        ESP_ERROR_CHECK(adc_oneshot_read(adc1_handle, EXAMPLE_ADC1_CHAN1, &adc_raw[0][1]));
-        ESP_LOGI(TAG, "ADC%d Channel[%d] Raw Data: %d", ADC_UNIT_1 + 1, EXAMPLE_ADC1_CHAN1, adc_raw[0][1]);
-        if (do_calibration1_chan1) {
-            ESP_ERROR_CHECK(adc_cali_raw_to_voltage(adc1_cali_chan1_handle, adc_raw[0][1], &voltage[0][1]));
-            ESP_LOGI(TAG, "ADC%d Channel[%d] Cali Voltage: %d mV", ADC_UNIT_1 + 1, EXAMPLE_ADC1_CHAN1, voltage[0][1]);
+        if (light_on != prev_state) {
+            ESP_LOGI(TAG, "Transition: %d -> %d | Duration: %lld ms", prev_state, light_on, duration);
+
+            if (prev_state == 1 && light_on == 0) {
+                // LED just turned OFF
+                if (duration < DOT_MS * 1.5) {
+                    if (letter_index < MAX_MORSE_LEN) {
+                        morse_letter[letter_index++] = '.';
+                    } else {
+                        ESP_LOGW(TAG, "Morse buffer full. Resetting.");
+                        letter_index = 0;
+                        memset(morse_letter, 0, sizeof(morse_letter));
+                    }
+                } else {
+                    if (letter_index < MAX_MORSE_LEN) {
+                        morse_letter[letter_index++] = '-';
+                    } else {
+                        ESP_LOGW(TAG, "Morse buffer full. Resetting.");
+                        letter_index = 0;
+                        memset(morse_letter, 0, sizeof(morse_letter));
+                    }
+                }
+            } else if (prev_state == 0 && light_on == 1) {
+                // LED just turned ON (gap just ended)
+                if (duration > WORD_SPACE_MS) {
+                    // Decode letter before word break
+                    if (letter_index > 0) {
+                        morse_letter[letter_index] = '\0';
+                        char decoded = decode_morse(morse_letter);
+                        message_buffer[message_index++] = decoded;
+                    }
+                    message_buffer[message_index++] = ' ';
+                    message_buffer[message_index] = '\0';
+                    printf("Message: %s\n", message_buffer);
+                    letter_index = 0;
+                    memset(morse_letter, 0, sizeof(morse_letter));
+                
+                } else if (duration > LETTER_SPACE_MS) {
+                    if (letter_index > 0) {
+                        morse_letter[letter_index] = '\0';
+                        char decoded = decode_morse(morse_letter);
+                        message_buffer[message_index++] = decoded;
+                        message_buffer[message_index] = '\0';
+                        ESP_LOGI(TAG, "Decoded [%s] = %c", morse_letter, decoded);
+                        letter_index = 0;
+                        memset(morse_letter, 0, sizeof(morse_letter));
+                    }
+                }
+                
+            }
+
+            prev_state = light_on;
+            last_change_time = now;
         }
-        vTaskDelay(pdMS_TO_TICKS(1000));
 
-#if EXAMPLE_USE_ADC2
-        ESP_ERROR_CHECK(adc_oneshot_read(adc2_handle, EXAMPLE_ADC2_CHAN0, &adc_raw[1][0]));
-        ESP_LOGI(TAG, "ADC%d Channel[%d] Raw Data: %d", ADC_UNIT_2 + 1, EXAMPLE_ADC2_CHAN0, adc_raw[1][0]);
-        if (do_calibration2) {
-            ESP_ERROR_CHECK(adc_cali_raw_to_voltage(adc2_cali_handle, adc_raw[1][0], &voltage[1][0]));
-            ESP_LOGI(TAG, "ADC%d Channel[%d] Cali Voltage: %d mV", ADC_UNIT_2 + 1, EXAMPLE_ADC2_CHAN0, voltage[1][0]);
-        }
-        vTaskDelay(pdMS_TO_TICKS(1000));
-#endif  //#if EXAMPLE_USE_ADC2
+        vTaskDelay(pdMS_TO_TICKS(20));
     }
-
-    //Tear Down
-    ESP_ERROR_CHECK(adc_oneshot_del_unit(adc1_handle));
-    if (do_calibration1_chan0) {
-        example_adc_calibration_deinit(adc1_cali_chan0_handle);
-    }
-    if (do_calibration1_chan1) {
-        example_adc_calibration_deinit(adc1_cali_chan1_handle);
-    }
-
-#if EXAMPLE_USE_ADC2
-    ESP_ERROR_CHECK(adc_oneshot_del_unit(adc2_handle));
-    if (do_calibration2) {
-        example_adc_calibration_deinit(adc2_cali_handle);
-    }
-#endif //#if EXAMPLE_USE_ADC2
-}
-
-/*---------------------------------------------------------------
-        ADC Calibration
----------------------------------------------------------------*/
-static bool example_adc_calibration_init(adc_unit_t unit, adc_channel_t channel, adc_atten_t atten, adc_cali_handle_t *out_handle)
-{
-    adc_cali_handle_t handle = NULL;
-    esp_err_t ret = ESP_FAIL;
-    bool calibrated = false;
-
-#if ADC_CALI_SCHEME_CURVE_FITTING_SUPPORTED
-    if (!calibrated) {
-        ESP_LOGI(TAG, "calibration scheme version is %s", "Curve Fitting");
-        adc_cali_curve_fitting_config_t cali_config = {
-            .unit_id = unit,
-            .chan = channel,
-            .atten = atten,
-            .bitwidth = ADC_BITWIDTH_DEFAULT,
-        };
-        ret = adc_cali_create_scheme_curve_fitting(&cali_config, &handle);
-        if (ret == ESP_OK) {
-            calibrated = true;
-        }
-    }
-#endif
-
-#if ADC_CALI_SCHEME_LINE_FITTING_SUPPORTED
-    if (!calibrated) {
-        ESP_LOGI(TAG, "calibration scheme version is %s", "Line Fitting");
-        adc_cali_line_fitting_config_t cali_config = {
-            .unit_id = unit,
-            .atten = atten,
-            .bitwidth = ADC_BITWIDTH_DEFAULT,
-        };
-        ret = adc_cali_create_scheme_line_fitting(&cali_config, &handle);
-        if (ret == ESP_OK) {
-            calibrated = true;
-        }
-    }
-#endif
-
-    *out_handle = handle;
-    if (ret == ESP_OK) {
-        ESP_LOGI(TAG, "Calibration Success");
-    } else if (ret == ESP_ERR_NOT_SUPPORTED || !calibrated) {
-        ESP_LOGW(TAG, "eFuse not burnt, skip software calibration");
-    } else {
-        ESP_LOGE(TAG, "Invalid arg or no memory");
-    }
-
-    return calibrated;
-}
-
-static void example_adc_calibration_deinit(adc_cali_handle_t handle)
-{
-#if ADC_CALI_SCHEME_CURVE_FITTING_SUPPORTED
-    ESP_LOGI(TAG, "deregister %s calibration scheme", "Curve Fitting");
-    ESP_ERROR_CHECK(adc_cali_delete_scheme_curve_fitting(handle));
-
-#elif ADC_CALI_SCHEME_LINE_FITTING_SUPPORTED
-    ESP_LOGI(TAG, "deregister %s calibration scheme", "Line Fitting");
-    ESP_ERROR_CHECK(adc_cali_delete_scheme_line_fitting(handle));
-#endif
 }

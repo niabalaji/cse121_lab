@@ -1,0 +1,15 @@
+{
+	"folders": [
+		{
+			"path": "../../../../lab4_3"
+		},
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"esp_hidd_prf_api.h": "c"
+		}
+	}
+}
