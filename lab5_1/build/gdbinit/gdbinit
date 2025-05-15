@@ -1,0 +1,2 @@
+source /home/ubuntu/esp/lab5_1/build/gdbinit/symbols
+source /home/ubuntu/esp/lab5_1/build/gdbinit/connect
