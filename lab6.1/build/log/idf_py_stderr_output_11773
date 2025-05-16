@@ -1,0 +1,43 @@
+Command: /Users/niranjanabalaji/.espressif/python_env/idf5.5_py3.13_env/bin/python /Users/niranjanabalaji/cse121_lab/esp-idf/tools/idf_monitor.py -p /dev/cu.usbmodem1301 -b 115200 --toolchain-prefix riscv32-esp-elf- --target esp32c3 --revision 3 --decode-panic backtrace /Users/niranjanabalaji/cse121_lab/lab6_1/build/lab6_1.elf /Users/niranjanabalaji/cse121_lab/lab6_1/build/bootloader/bootloader.elf -m '/Users/niranjanabalaji/.espressif/python_env/idf5.5_py3.13_env/bin/python' '/Users/niranjanabalaji/cse121_lab/esp-idf/tools/idf.py'
+[0;33m--- esp-idf-monitor 1.6.2 on /dev/cu.usbmodem1301 115200[0m
+[0;33m--- Quit: Ctrl+] | Menu: Ctrl+T | Help: Ctrl+T followed by Ctrl+H[0m
+[0;33m--- 0x42009c38: gpio_get_level at /Users/niranjanabalaji/cse121_lab/esp-idf/components/esp_driver_gpio/src/gpio.c:246
+[0m
+[0;33m--- 0x403cbf10: esp_bootloader_get_description at /Users/niranjanabalaji/cse121_lab/esp-idf/components/esp_bootloader_format/esp_bootloader_desc.c:39 (discriminator 1)
+[0m
+[0;33m--- 0x403ce710: esp_flash_encryption_enabled at /Users/niranjanabalaji/cse121_lab/esp-idf/components/bootloader_support/src/flash_encrypt.c:89
+[0m
+[0;33m--- 0x403cbf1a: call_start_cpu0 at /Users/niranjanabalaji/cse121_lab/esp-idf/components/bootloader/subproject/main/bootloader_start.c:25
+[0m
+[0;33m--- Stack dump detected[0m
+[0;33m--- 0x4200906c: sr04_get_distance at /Users/niranjanabalaji/cse121_lab/lab6_1/main/sr04.c:23 (discriminator 1)
+--- 0x42009072: sr04_get_distance at /Users/niranjanabalaji/cse121_lab/lab6_1/main/sr04.c:23 (discriminator 1)
+[0m
+[0;33m--- 0x4200e0d4: i2c_master_write_to_device at /Users/niranjanabalaji/cse121_lab/esp-idf/components/driver/i2c/i2c.c:1052
+[0m
+[0;33m--- 0x40380001: _vector_table at /Users/niranjanabalaji/cse121_lab/esp-idf/components/riscv/vectors_intc.S:54
+[0m
+[0;33m--- 0x42009c2a: gpio_ll_get_level at /Users/niranjanabalaji/cse121_lab/esp-idf/components/hal/esp32c3/include/hal/gpio_ll.h:334
+---  (inlined by) gpio_get_level at /Users/niranjanabalaji/cse121_lab/esp-idf/components/esp_driver_gpio/src/gpio.c:245
+--- 0x42009086: sr04_get_distance at /Users/niranjanabalaji/cse121_lab/lab6_1/main/sr04.c:26 (discriminator 1)
+[0m
+[0;33m--- 0x4200e0d4: i2c_master_write_to_device at /Users/niranjanabalaji/cse121_lab/esp-idf/components/driver/i2c/i2c.c:1052
+[0m
+[0;33m--- 0x40380001: _vector_table at /Users/niranjanabalaji/cse121_lab/esp-idf/components/riscv/vectors_intc.S:54
+[0m
+[0;33m--- 0x42009082: sr04_get_distance at /Users/niranjanabalaji/cse121_lab/lab6_1/main/sr04.c:26 (discriminator 1)
+--- 0x42009086: sr04_get_distance at /Users/niranjanabalaji/cse121_lab/lab6_1/main/sr04.c:26 (discriminator 1)
+[0m
+[0;33m--- 0x4200e0d4: i2c_master_write_to_device at /Users/niranjanabalaji/cse121_lab/esp-idf/components/driver/i2c/i2c.c:1052
+[0m
+[0;33m--- 0x40380001: _vector_table at /Users/niranjanabalaji/cse121_lab/esp-idf/components/riscv/vectors_intc.S:54
+[0m
+[0;33m--- 0x42009c2c: gpio_ll_get_level at /Users/niranjanabalaji/cse121_lab/esp-idf/components/hal/esp32c3/include/hal/gpio_ll.h:334
+---  (inlined by) gpio_get_level at /Users/niranjanabalaji/cse121_lab/esp-idf/components/esp_driver_gpio/src/gpio.c:245
+--- 0x42009072: sr04_get_distance at /Users/niranjanabalaji/cse121_lab/lab6_1/main/sr04.c:23 (discriminator 1)
+[0m
+[0;33m--- 0x4200e0d4: i2c_master_write_to_device at /Users/niranjanabalaji/cse121_lab/esp-idf/components/driver/i2c/i2c.c:1052
+[0m
+[0;33m--- 0x40380001: _vector_table at /Users/niranjanabalaji/cse121_lab/esp-idf/components/riscv/vectors_intc.S:54
+[0m
+[0m
